@@ -8,8 +8,12 @@
 //idle : 화면색 검정색으로 clear
 //마우스 오른쪽 keyDown하면 : 빨간색
 //마우스 오른쪽 keyUp하면 : 원상복구
+// 
+// 
 //마우스 왼쪽 keyDown하면 : 녹색
 //마우스 왼쪽 keyUp하면 : 원상복구
+// 
+// 
 //마우스 오른쪽 keyDown하고 드래그 중이면 : 파랑색
 //마우스 왼쪽 keyDown하고 드래그 중이면 : 마젠타색
 
@@ -23,7 +27,7 @@ void errorCallback(int error, const char* description)
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) 
 
 {
-	if (key = GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 	{
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 	}
@@ -36,110 +40,191 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		MousePos() : oldXpos{0}, oldYpos{0}
 		{}
 	
-		double GetXpos()
+		float GetXpos()
 		{
 			return oldXpos;
 		}
-		double GetYpos()
+		float GetYpos()
 		{
 			return oldYpos;
 		}
 		
-		void SetXpos(double currentXpos)
+		void SetXpos(float currentXpos)
 		{
 			oldXpos = currentXpos;
 		}
-		void SetYpos(double currentYpos)
+		void SetYpos(float currentYpos)
 		{
 			oldYpos = currentYpos;
 		}
 
 	private:
-		double oldXpos;
-		double oldYpos;
+		float oldXpos;
+		float oldYpos;
 
 	};
 
 
-	bool firstclick = false;
-	double currentXpos = 0;
-	double currentYpos = 0;
+	bool firstLeftClick = false;
+	bool firstRightClick = false;
+	double currentXpos = 0.0;
+	double currentYpos = 0.0;
+	int smoothDragTimer = 0;
+	bool smoothDrag;
+	int smoothDragTimerLimit = 500;
 
-void mouseLeftRightInput(GLFWwindow* window,bool & leftKeyPress, bool & rightKeyPress, MousePos & mousePos)
+void mouseLeftInput(GLFWwindow* window,bool & leftKeyPress , MousePos & mousePos)
 {
 
 	int Lstate = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
-	int Rstate = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
 
 	if (Lstate == GLFW_PRESS)
 	{
 
 		std::cout << "마우스 왼쪽키" << std::endl;
 
-		
-		
 		glfwGetCursorPos(window, &currentXpos, &currentYpos);
-		if (firstclick == false)
+		if (firstLeftClick == false)
 		{
 			mousePos.SetXpos(currentXpos);
 			mousePos.SetYpos(currentYpos);
-			firstclick = true;
+			firstLeftClick = true;
 		}
 
-		std::cout << "currentXpos" << currentXpos << std::endl;
-		std::cout << "currentYpos" << currentYpos << std::endl;
+		std::cout << "currentXpos : " << currentXpos << std::endl;
+		std::cout << "currentYpos : " << currentYpos << std::endl;
 	
-		std::cout << "oldXpos" << mousePos.GetXpos() << std::endl;
-		std::cout << "oldYpos" << mousePos.GetYpos() << std::endl;
+		std::cout << "----oldXpos : " << mousePos.GetXpos() << std::endl;
+		std::cout << "----oldYpos : " << mousePos.GetYpos() << std::endl;
 
 
 			
-		if ((currentXpos == mousePos.GetXpos()) && (currentYpos == mousePos.GetYpos()))
+		if ((currentXpos == mousePos.GetXpos()) && (currentYpos == mousePos.GetYpos()) && smoothDrag == false)
 		{
-			glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+
+			glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+			std::cout << "초록색------------------------------------------" << std::endl;
+
+
 		}
 		else
+		if ((currentXpos == mousePos.GetXpos()) && (currentYpos == mousePos.GetYpos()) && smoothDrag == true)
 		{
-			glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
-			std::cout << "드래깅 파란색" << std::endl;
-
+			smoothDragTimer++;
 			
+			std::cout << "드래깅 마젠타색@@@@@@@@@@@@@@" << std::endl;
+			glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+			std::cout << smoothDragTimer << std::endl;
+
+			if (smoothDragTimer > smoothDragTimerLimit)
+			{
+
+				smoothDrag = false;
+
+			}
 		}
 
 
-		mousePos.SetXpos(currentXpos);
-		mousePos.SetYpos(currentYpos);
-		
-
+		else
+		{
+			smoothDrag = true;
+			
+			std::cout << "드래깅 파란색@@@@@@@@@@@@@@" << std::endl;
+			glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+			
+			smoothDragTimer = 0;
+		}
 		leftKeyPress = true;
-
 	}
 	else if (Lstate == GLFW_RELEASE && leftKeyPress == true)
 	{
 		std::cout << "마우스 왼쪽키 up" << std::endl;
-		firstclick = false;
+		firstLeftClick = false;
+		smoothDrag = false;
+
+		leftKeyPress = false;
+
+	}
+}
+
+void mouseRightInput(GLFWwindow* window, bool& leftKeyPress, MousePos& mousePos)
+{
+	int Rstate = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
+
+	if (Rstate == GLFW_PRESS)
+	{
+
+		std::cout << "마우스 오른쪽키" << std::endl;
+
+		glfwGetCursorPos(window, &currentXpos, &currentYpos);
+		if (firstRightClick == false)
+		{
+			mousePos.SetXpos(currentXpos);
+			mousePos.SetYpos(currentYpos);
+			firstRightClick = true;
+		}
+
+		std::cout << "currentXpos : " << currentXpos << std::endl;
+		std::cout << "currentYpos : " << currentYpos << std::endl;
+
+		std::cout << "----oldXpos : " << mousePos.GetXpos() << std::endl;
+		std::cout << "----oldYpos : " << mousePos.GetYpos() << std::endl;
+
+
+
+		if ((currentXpos == mousePos.GetXpos()) && (currentYpos == mousePos.GetYpos()) && smoothDrag == false)
+		{
+
+			glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+			std::cout << "빨간색------------------------------------------" << std::endl;
+
+
+		}
+		else
+			if ((currentXpos == mousePos.GetXpos()) && (currentYpos == mousePos.GetYpos()) && smoothDrag == true)
+			{
+				smoothDragTimer++;
+
+				std::cout << "드래깅 파란색@@@@@@@@@@@@@@" << std::endl;
+				glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+				std::cout << smoothDragTimer << std::endl;
+
+				if (smoothDragTimer > smoothDragTimerLimit)
+				{
+
+					smoothDrag = false;
+
+				}
+			}
+
+
+			else
+			{
+				smoothDrag = true;
+
+				std::cout << "드래깅 파란색@@@@@@@@@@@@@@" << std::endl;
+				glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+
+				smoothDragTimer = 0;
+			}
+		leftKeyPress = true;
+	}
+	else if (Rstate == GLFW_RELEASE && leftKeyPress == true)
+	{
+		std::cout << "마우스 오른쪽키 up" << std::endl;
+		firstLeftClick = false;
+		smoothDrag = false;
 
 		leftKeyPress = false;
 
 	}
 
-	if (Rstate == GLFW_PRESS)
-	{
-		std::cout << "마우스 오른쪽키" << std::endl;
-
-		glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
-		rightKeyPress = true;
-
-	}
-	else if (Rstate == GLFW_RELEASE && rightKeyPress == true)
-	{
-		std::cout << "마우스 오른쪽키 up" << std::endl;
-
-		rightKeyPress = false;
-	}
-
 
 }
+
+
+
+
 
 void mouseLeftRightDragInput(GLFWwindow* window) {
 
@@ -148,6 +233,66 @@ void mouseLeftRightDragInput(GLFWwindow* window) {
 	glfwGetCursorPos(window, &xpos, &ypos);
 
 };
+
+
+class Star
+{
+public:	Star()
+	{
+
+	}
+
+	int Render()
+	{
+
+
+		glBegin(GL_TRIANGLES);
+		glColor3f(1.0f, 0.5f, 1.0f);
+		glVertex2f(0.0f, 1.0f);
+
+		glColor3f(1.0f, 0.5f, 1.0f);
+		glVertex2f(0.18f, 0.25f);
+
+		glColor3f(1.0f, 0.5f, 1.0f);
+		glVertex2f(-0.18f, 0.25f);
+
+		glBegin(GL_TRIANGLES);
+		glColor3f(1.0f, 1.0f, 0.0f);
+		glVertex2f(0.18f, 0.25f);
+
+		glColor3f(1.0f, 1.0f, 0.0f);
+		glVertex2f(-0.7f, 0.25f);
+
+		glColor3f(1.0f, 1.0f, 0.0f);
+		glVertex2f(0.45f, -1.0f);
+
+		glBegin(GL_TRIANGLES);
+		glColor3f(0.0f, 1.0f, 1.0f);
+		glVertex2f(-0.18f, 0.25f);
+
+		glColor3f(0.0f, 1.0f, 1.0f);
+		glVertex2f(0.7f, 0.25f);
+
+		glColor3f(0.0f, 1.0f, 1.0f);
+		glVertex2f(-0.45f, -1.0f);
+
+		glEnd();
+
+
+		return 0;
+	}
+	
+};
+
+
+int Render()
+{
+	Star *star1 = new Star();
+	star1->Render();
+
+	return 0;
+}
+
 
 int main(void)
 {
@@ -176,13 +321,14 @@ int main(void)
 	bool rightKeyPress = false;
 	bool firstClick = false;
 	
-	double currentXpos, currentYpos;
+	//double currentXpos, currentYpos;
 
 	MousePos mousePos;
 
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window))
 	{
+
 
 		glfwPollEvents();
 
@@ -194,16 +340,25 @@ int main(void)
 		
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-		mouseLeftRightInput(window, leftKeyPress, rightKeyPress, mousePos);
+		mouseLeftInput(window, leftKeyPress, mousePos);
+		mouseRightInput(window, rightKeyPress, mousePos);
 
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		Render();
+
 
 
 		/*Swap frint and back buffers */
 		glfwSwapBuffers(window);
+		mousePos.SetXpos(currentXpos);
+		mousePos.SetYpos(currentYpos);
+
 	}
 
 	glfwTerminate();
 	return 0;
 }
 
+
+//별 클릭하여 드래그 하면 마우스 따라 움직임. 오른쪽으로 드래그시 크기 커짐 왼쪽으로 드래그시 크기 작아짐
